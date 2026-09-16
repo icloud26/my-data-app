@@ -1,16 +1,20 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # 페이지 설정
 st.set_page_config(
-    page_title="서울 연평균 기온 변화",
+    page_title="서울 일별 평균기온 분포",
     page_icon="🌡️",
     layout="wide"
 )
 
 # 제목
-st.title("🌡️ 서울의 연평균 기온 변화")
-st.write("1907년 이후 서울의 연평균 기온이 어떻게 변해 왔는지 살펴봅니다.")
+st.title("🌡️ 서울의 일별 평균기온 분포")
+st.write(
+    "1907년 이후 서울의 일별 평균기온이 "
+    "어느 온도 구간에 많이 분포하는지 살펴봅니다."
+)
 
 # 데이터 주소
 url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/seoul.csv"
@@ -20,48 +24,37 @@ url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/seoul.csv"
 @st.cache_data
 def load_data():
     df = pd.read_csv(url)
-
-    # 날짜를 날짜 형식으로 변환
     df["날짜"] = pd.to_datetime(df["날짜"])
-
-    # 연도 열 만들기
-    df["연도"] = df["날짜"].dt.year
-
     return df
 
 
 df = load_data()
 
+# 결측값 제거
+temperature = df["평균기온"].dropna()
 
-# 연도별 평균기온 계산
-yearly_temp = (
-    df.groupby("연도")["평균기온"]
-    .mean()
-    .reset_index()
+# 히스토그램
+st.subheader("일별 평균기온 히스토그램")
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+ax.hist(
+    temperature,
+    bins=30,
+    edgecolor="black"
 )
 
-# 선 그래프
-st.subheader("연도별 평균기온")
+ax.set_xlabel("Average Temperature (°C)")
+ax.set_ylabel("Number of Days")
+ax.set_title("Distribution of Daily Average Temperature in Seoul")
+ax.grid(axis="y", alpha=0.3)
 
-chart_data = yearly_temp.set_index("연도")
+st.pyplot(fig)
 
-st.line_chart(
-    chart_data,
-    y="평균기온",
-    x_label="연도",
-    y_label="평균기온 (℃)"
-)
+# 간단한 통계 정보
+st.subheader("평균기온 통계")
 
-# 안내
-st.info(
-    "※ 1907년의 데이터는 10월 1일부터 시작하므로 "
-    "1907년 평균은 1년 전체의 평균기온이 아닙니다."
-)
-
-# 데이터 확인
-with st.expander("연도별 평균기온 데이터 보기"):
-    st.dataframe(
-        yearly_temp,
-        use_container_width=True,
-        hide_index=True
-    )
+st.write(f"전체 관측 일수: {len(temperature):,}일")
+st.write(f"평균기온: {temperature.mean():.1f}℃")
+st.write(f"가장 낮은 일평균기온: {temperature.min():.1f}℃")
+st.write(f"가장 높은 일평균기온: {temperature.max():.1f}℃")
