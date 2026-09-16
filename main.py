@@ -4,16 +4,16 @@ import matplotlib.pyplot as plt
 
 # 페이지 설정
 st.set_page_config(
-    page_title="서울 일별 평균기온 분포",
+    page_title="서울 최저기온과 최고기온의 관계",
     page_icon="🌡️",
     layout="wide"
 )
 
 # 제목
-st.title("🌡️ 서울의 일별 평균기온 분포")
+st.title("🌡️ 서울의 최저기온과 최고기온의 관계")
 st.write(
-    "1907년 이후 서울의 일별 평균기온이 "
-    "어느 온도 구간에 많이 분포하는지 살펴봅니다."
+    "1907년 이후 서울의 날마다의 최저기온과 최고기온이 "
+    "어떤 관계를 보이는지 산점도로 살펴봅니다."
 )
 
 # 데이터 주소
@@ -30,31 +30,35 @@ def load_data():
 
 df = load_data()
 
-# 결측값 제거
-temperature = df["평균기온"].dropna()
+# 최저기온과 최고기온에 결측값이 있는 행 제거
+temp = df[["최저기온", "최고기온"]].dropna()
 
-# 히스토그램
-st.subheader("일별 평균기온 히스토그램")
+# 산점도
+st.subheader("일별 최저기온과 최고기온 산점도")
 
-fig, ax = plt.subplots(figsize=(10, 5))
+fig, ax = plt.subplots(figsize=(9, 7))
 
-ax.hist(
-    temperature,
-    bins=30,
-    edgecolor="black"
+ax.scatter(
+    temp["최저기온"],
+    temp["최고기온"],
+    alpha=0.3,
+    s=10
 )
 
-ax.set_xlabel("Average Temperature (°C)")
-ax.set_ylabel("Number of Days")
-ax.set_title("Distribution of Daily Average Temperature in Seoul")
-ax.grid(axis="y", alpha=0.3)
+ax.set_xlabel("Minimum Temperature (°C)")
+ax.set_ylabel("Maximum Temperature (°C)")
+ax.set_title("Daily Minimum vs Maximum Temperature in Seoul")
+ax.grid(alpha=0.3)
 
 st.pyplot(fig)
 
-# 간단한 통계 정보
-st.subheader("평균기온 통계")
+# 상관계수 계산
+correlation = temp["최저기온"].corr(temp["최고기온"])
 
-st.write(f"전체 관측 일수: {len(temperature):,}일")
-st.write(f"평균기온: {temperature.mean():.1f}℃")
-st.write(f"가장 낮은 일평균기온: {temperature.min():.1f}℃")
-st.write(f"가장 높은 일평균기온: {temperature.max():.1f}℃")
+st.subheader("두 기온의 관계")
+st.write(f"최저기온과 최고기온의 상관계수: **{correlation:.2f}**")
+
+st.info(
+    "점들이 오른쪽 위 방향으로 모여 있다면, "
+    "최저기온이 높은 날에는 최고기온도 대체로 높다는 뜻입니다."
+)
